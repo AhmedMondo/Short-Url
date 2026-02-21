@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>go.lous.in — Free & Open-Source URL Shortener</title>
+
+  <!-- Primary SEO -->
+  <meta
+    name="description"
+    content="go.lous.in is a fast, free, open-source URL shortener for creating clean short links with optional password protection and expiration."
+  />
+  <meta
+    name="keywords"
+    content="url shortener, link shortener, short link, open source url shortener, free url shortener, lous.in"
+  />
+  <meta name="author" content="Lousin" />
+  <link rel="canonical" href="https://go.lous.in/" />
+
+  <!-- Indexing -->
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+
+  <!-- Open Graph (Facebook/LinkedIn/Discord) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://go.lous.in/" />
+  <meta property="og:title" content="go.lous.in — Free & Open-Source URL Shortener" />
+  <meta
+    property="og:description"
+    content="Create short links instantly. Free & open-source. Optional password protection and expiration."
+  />
+  <!-- Recommended: 1200x630 -->
+  <meta property="og:image" content="https://go.lous.in/og.png" />
+  <meta property="og:site_name" content="go.lous.in" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://go.lous.in/" />
+  <meta name="twitter:title" content="go.lous.in — Free & Open-Source URL Shortener" />
+  <meta
+    name="twitter:description"
+    content="Create short links instantly. Free & open-source. Optional password protection and expiration."
+  />
+  <meta name="twitter:image" content="https://go.lous.in/og.png" />
+
+  <!-- Favicons -->
+  <link rel="icon" href="https://lous.in/favicon.ico?favicon.6580bcea.ico" sizes="any" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#0b0b0f" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Structured Data (helps Google understand your site) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "go.lous.in",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any",
+      "isAccessibleForFree": true,
+      "description": "A fast, free, open-source URL shortener for clean short links with optional password protection and expiration.",
+      "url": "https://go.lous.in/",
+      "license": "https://opensource.org/licenses/MIT",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Lousin",
+        "url": "https://lous.in/"
+      },
+      "codeRepository": "https://github.com/AhmedMondo/Short-Url"
+    }
+  </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #222222;
+    --accent: #c8ff00;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #555;
+    --error: #ff4444;
+    --success: #00ff88;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,255,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,255,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* NAV */
+  nav {
+    padding: 28px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .by {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .github-link {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 6px 12px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .github-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    padding: 80px 0 56px;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.4rem, 7vw, 4.2rem);
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 .accent { color: var(--accent); }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+  }
+
+  /* FORM */
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+
+  .toggle-advanced {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.15s;
+    text-transform: uppercase;
+  }
+
+  .toggle-advanced:hover { color: var(--accent); }
+
+  .toggle-icon { transition: transform 0.2s; }
+  .toggle-icon.open { transform: rotate(90deg); }
+
+  .advanced {
+    display: none;
+    margin-top: 16px;
+  }
+
+  .advanced.visible { display: block; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn:hover { background: #d9ff1a; }
+  .btn:active { transform: scale(0.99); }
+  .btn:disabled { background: var(--muted); cursor: not-allowed; }
+
+  .btn-text { display: inline-block; transition: opacity 0.15s; }
+  .btn.loading .btn-text { opacity: 0; }
+
+  .spinner {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn.loading .spinner { display: flex; }
+
+  .spinner::after {
+    content: '';
+    width: 18px; height: 18px;
+    border: 2px solid #000;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RESULT */
+  .result {
+    display: none;
+    animation: slideUp 0.3s ease;
+  }
+
+  .result.visible { display: block; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result .card::before { background: var(--success); }
+
+  .result-label {
+    font-size: 0.68rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .result-url {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+    word-break: break-all;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+  }
+
+  .result-url a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .result-url a:hover { text-decoration: underline; }
+
+  .result-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .meta-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 8px 14px;
+  }
+
+  .meta-item .key {
+    font-size: 0.62rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .meta-item .val {
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+
+  .copy-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--success); color: var(--success); }
+
+  /* ERROR */
+  .error-msg {
+    display: none;
+    background: #1a0000;
+    border: 1px solid var(--error);
+    border-radius: 2px;
+    padding: 14px 18px;
+    color: var(--error);
+    font-size: 0.8rem;
+    margin-top: 16px;
+  }
+
+  .error-msg.visible { display: block; }
+
+  /* LOOKUP */
+  .lookup-result {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+
+  .lookup-result.visible { display: block; }
+
+  .lookup-url {
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    word-break: break-all;
+  }
+
+  .lookup-url strong { color: var(--accent); }
+
+  /* FOOTER */
+  footer {
+    padding: 48px 0 32px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+  }
+
+  footer a { color: var(--accent2); text-decoration: none; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 8px 0 32px;
+  }
+
+  /* API DOCS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 16px 10px;
+    cursor: pointer;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .endpoint {
+    margin-bottom: 28px;
+  }
+
+  .endpoint:last-child { margin-bottom: 0; }
+
+  .ep-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .method {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  .method.post { background: rgba(200,255,0,0.15); color: var(--accent); }
+  .method.get { background: rgba(0,200,255,0.12); color: #00d4ff; }
+
+  .ep-path {
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  .ep-desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+
+  pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.7;
+    color: #ccc;
+    position: relative;
+  }
+
+  .pre-label {
+    font-size: 0.62rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .hl-key { color: #7dd3fc; }
+  .hl-str { color: #86efac; }
+  .hl-num { color: #fbbf24; }
+  .hl-comment { color: var(--muted); }
+  .hl-method { color: var(--accent); }
+  .hl-url { color: #f0abfc; }
+
+  .copy-code-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .copy-code-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .copy-code-btn.copied { color: var(--success); border-color: var(--success); }
+
+  .params-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+    margin-bottom: 12px;
+  }
+
+  .params-table th {
+    text-align: left;
+    font-size: 0.62rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .params-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .params-table tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  .badge.req { background: rgba(255,100,100,0.15); color: #ff8080; }
+  .badge.opt { background: rgba(100,100,100,0.2); color: var(--muted); }
+
+  .sep { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  @media (max-width: 480px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .card { padding: 24px 20px; }
+    .hero h1 { font-size: 2.2rem; }
+    .nav-right { gap: 10px; }
+    .github-link span { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <nav>
+    <div class="logo">go.<span>lous</span>.in</div>
+    <div class="nav-right">
+      <a class="github-link" href="https://github.com/Ahmed-Mondo/Short-Url" target="_blank">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+      <div class="by">by Ahmed_Mondo</div>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <h1>Shorten.<br><span class="accent">Share.</span><br>Track.</h1>
+    <p>// fast · private · no nonsense</p>
+  </section>
+
+  <!-- SHORTEN FORM -->
+  <div class="card">
+    <div class="card-title">// Shorten URL</div>
+
+    <div class="form-group">
+      <label>Destination URL *</label>
+      <input type="url" id="url" placeholder="https://example.com/very/long/url" autocomplete="off">
+    </div>
+
+    <button class="toggle-advanced" onclick="toggleAdvanced()">
+      <span class="toggle-icon" id="toggle-icon">▶</span>
+      Advanced options
+    </button>
+
+    <div class="advanced" id="advanced">
+      <div class="form-group">
+        <label>Password (optional)</label>
+        <input type="password" id="password" placeholder="Protect with a password">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Expiry Date (optional)</label>
+          <input type="date" id="expiresAt" min="">
+        </div>
+        <div class="form-group">
+          <label>Custom Code (optional)</label>
+          <input type="text" id="code" placeholder="my-link" maxlength="32">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" id="shorten-btn" onclick="shortenUrl()">
+      <span class="btn-text">Shorten</span>
+      <span class="spinner"></span>
+    </button>
+
+    <div class="error-msg" id="shorten-error"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result" id="result">
+    <div class="card">
+      <div class="card-title">// Link Created</div>
+
+      <div class="result-label">Your short link</div>
+      <div class="result-url" id="result-url"></div>
+
+      <div class="result-meta" id="result-meta"></div>
+
+      <button class="copy-btn" id="copy-btn" onclick="copyLink()">Copy Link</button>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LOOKUP FORM -->
+  <div class="card">
+    <div class="card-title">// Lookup Short Code</div>
+
+    <div class="form-group" style="margin-bottom:0">
+      <label>Short Code or Full Short URL</label>
+      <input type="text" id="lookup-input" placeholder="e.g. abc123 or go.lous.in/abc123" autocomplete="off">
+    </div>
+
+    <button class="btn" id="lookup-btn" onclick="lookupCode()" style="margin-top:16px">
+      <span class="btn-text">Lookup</span>
+      <span class="spinner"></span>
+    </button>
+
+    <div class="error-msg" id="lookup-error"></div>
+
+    <div class="lookup-result" id="lookup-result">
+      <div class="result-label">Redirects to</div>
+      <div class="lookup-url" id="lookup-url"></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- API DOCS -->
+  <div class="card">
+    <div class="card-title">// API Reference</div>
+    <p class="ep-desc" style="margin-bottom:20px">Use the API directly in your own projects. All endpoints are available at <strong style="color:var(--text)">https://api.lous.in</strong> — no authentication required.</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('shorten-tab', this)">POST /shorten</button>
+      <button class="tab" onclick="switchTab('resolve-tab', this)">GET /short/:code</button>
+      <button class="tab" onclick="switchTab('examples-tab', this)">Code Examples</button>
+    </div>
+
+    <!-- TAB: POST /shorten -->
+    <div class="tab-panel active" id="shorten-tab">
+      <div class="endpoint">
+        <div class="ep-header">
+          <span class="method post">POST</span>
+          <span class="ep-path">https://api.lous.in/shorten</span>
+        </div>
+        <p class="ep-desc">Creates a shortened URL. Send a JSON body with the fields below.</p>
+
+        <div class="pre-label">Request Body (JSON)</div>
+        <table class="params-table">
+          <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>url</code></td><td>string</td><td><span class="badge req">required</span></td><td>The destination URL to shorten. Must be a valid HTTP/HTTPS URL.</td></tr>
+            <tr><td><code>password</code></td><td>string</td><td><span class="badge opt">optional</span></td><td>Protect the link with a password.</td></tr>
+            <tr><td><code>expiresAt</code></td><td>string</td><td><span class="badge opt">optional</span></td><td>Expiry date in <code>YYYY-MM-DD</code> format. After this date, the link returns 404.</td></tr>
+            <tr><td><code>code</code></td><td>string</td><td><span class="badge opt">optional</span></td><td>Custom short code (e.g. <code>my-link</code>). Must be unique — returns 409 if taken.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="pre-label">Request</div>
+        <pre id="pre-request"><button class="copy-code-btn" onclick="copyCode('pre-request', this)">copy</button><span class="hl-method">POST</span> <span class="hl-url">https://api.lous.in/shorten</span>
+Content-Type: application/json
+
+{
+  <span class="hl-key">"url"</span>: <span class="hl-str">"https://example.com/some/very/long/path"</span>,
+  <span class="hl-key">"password"</span>: <span class="hl-str">"secret123"</span>,        <span class="hl-comment">// optional</span>
+  <span class="hl-key">"expiresAt"</span>: <span class="hl-str">"2025-12-31"</span>,       <span class="hl-comment">// optional</span>
+  <span class="hl-key">"code"</span>: <span class="hl-str">"my-custom-code"</span>        <span class="hl-comment">// optional</span>
+}</pre>
+
+        <div class="pre-label" style="margin-top:14px">Response (200 OK)</div>
+        <pre>{
+  <span class="hl-key">"code"</span>: <span class="hl-str">"my-custom-code"</span>,
+  <span class="hl-key">"url"</span>: <span class="hl-str">"https://go.lous.in/my-custom-code"</span>,
+  <span class="hl-key">"password"</span>: <span class="hl-str">"secret123"</span>,
+  <span class="hl-key">"expires_at"</span>: <span class="hl-str">"2025-12-31T00:00:00.000Z"</span>
+}</pre>
+
+        <div class="pre-label" style="margin-top:14px">Error Responses</div>
+        <pre><span class="hl-comment">// 409 — Custom code already taken</span>
+{ <span class="hl-key">"error"</span>: <span class="hl-str">"Code already taken"</span> }
+
+<span class="hl-comment">// 400 — Invalid date format</span>
+{ <span class="hl-key">"error"</span>: <span class="hl-str">"expiresAt must be a valid date in the format YYYY-MM-DD"</span> }
+
+<span class="hl-comment">// 400 — Missing or invalid URL</span>
+{ <span class="hl-key">"error"</span>: <span class="hl-str">"Usage"</span>, <span class="hl-key">"normal"</span>: { <span class="hl-key">"url"</span>: <span class="hl-str">"Link"</span> }, <span class="hl-comment">/* ... */</span> }</pre>
+      </div>
+    </div>
+
+    <!-- TAB: GET /short/:code -->
+    <div class="tab-panel" id="resolve-tab">
+      <div class="endpoint">
+        <div class="ep-header">
+          <span class="method get">GET</span>
+          <span class="ep-path">https://api.lous.in/short/:code</span>
+        </div>
+        <p class="ep-desc">Resolves a short code and redirects (302) to the destination URL. Increments the click counter and sets <code>last_clicked_at</code> on each visit. Returns <strong>404</strong> if the code doesn't exist or the link has expired.</p>
+
+        <div class="pre-label">Request</div>
+        <pre id="pre-resolve"><button class="copy-code-btn" onclick="copyCode('pre-resolve', this)">copy</button><span class="hl-method">GET</span> <span class="hl-url">https://api.lous.in/short/my-custom-code</span></pre>
+
+        <div class="pre-label" style="margin-top:14px">Success (302 Redirect)</div>
+        <pre>HTTP/1.1 <span class="hl-num">302</span> Found
+Location: https://example.com/some/very/long/path</pre>
+
+        <div class="pre-label" style="margin-top:14px">Errors</div>
+        <pre>HTTP/1.1 <span class="hl-num">404</span> Not Found
+<span class="hl-str">"Not Found"</span>   <span class="hl-comment">// code doesn't exist or link has expired</span></pre>
+      </div>
+    </div>
+
+    <!-- TAB: Code Examples -->
+    <div class="tab-panel" id="examples-tab">
+
+      <div class="endpoint">
+        <div class="ep-header">
+          <span class="method post">JS</span>
+          <span class="ep-path">fetch (browser / Node.js)</span>
+        </div>
+        <pre id="pre-js"><button class="copy-code-btn" onclick="copyCode('pre-js', this)">copy</button><span class="hl-comment">// Shorten a URL</span>
+const res = await fetch(<span class="hl-str">'https://api.lous.in/shorten'</span>, {
+  method: <span class="hl-str">'POST'</span>,
+  headers: { <span class="hl-str">'Content-Type'</span>: <span class="hl-str">'application/json'</span> },
+  body: JSON.stringify({
+    url: <span class="hl-str">'https://example.com/long-url'</span>,
+    code: <span class="hl-str">'my-link'</span>,        <span class="hl-comment">// optional</span>
+    expiresAt: <span class="hl-str">'2025-12-31'</span>  <span class="hl-comment">// optional</span>
+  })
+});
+
+const data = await res.json();
+console.log(data.url); <span class="hl-comment">// https://go.lous.in/my-link</span></pre>
+      </div>
+
+      <hr class="sep">
+
+      <div class="endpoint">
+        <div class="ep-header">
+          <span class="method get">PY</span>
+          <span class="ep-path">Python (requests)</span>
+        </div>
+        <pre id="pre-py"><button class="copy-code-btn" onclick="copyCode('pre-py', this)">copy</button>import requests
+
+response = requests.post(<span class="hl-str">'https://api.lous.in/shorten'</span>, json={
+    <span class="hl-str">'url'</span>: <span class="hl-str">'https://example.com/long-url'</span>,
+    <span class="hl-str">'code'</span>: <span class="hl-str">'my-link'</span>,
+})
+
+data = response.json()
+print(data[<span class="hl-str">'url'</span>])  <span class="hl-comment"># https://go.lous.in/my-link</span></pre>
+      </div>
+
+      <hr class="sep">
+
+      <div class="endpoint">
+        <div class="ep-header">
+          <span class="method get">SH</span>
+          <span class="ep-path">cURL</span>
+        </div>
+        <pre id="pre-curl"><button class="copy-code-btn" onclick="copyCode('pre-curl', this)">copy</button>curl -X POST https://api.lous.in/shorten \
+  -H <span class="hl-str">"Content-Type: application/json"</span> \
+  -d <span class="hl-str">'{"url":"https://example.com/long-url","code":"my-link"}'</span></pre>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <div>go.lous.in — URL Shortener</div>
+    <div>Built by <a href="https://lous.in" target="_blank">Ahmed_Mondo (Lousin)</a></div>
+  </footer>
+</div>
+
+<script>
+  const API = 'https://api.lous.in';
+  const SHORT_DOMAIN = 'https://go.lous.in';
+
+  // Set min date for expiry to today
+  document.getElementById('expiresAt').min = new Date().toISOString().split('T')[0];
+
+  let resultUrl = '';
+
+  function toggleAdvanced() {
+    const adv = document.getElementById('advanced');
+    const icon = document.getElementById('toggle-icon');
+    adv.classList.toggle('visible');
+    icon.classList.toggle('open');
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.classList.toggle('loading', loading);
+    btn.disabled = loading;
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function hideError(id) {
+    document.getElementById(id).classList.remove('visible');
+  }
+
+  async function shortenUrl() {
+    hideError('shorten-error');
+    document.getElementById('result').classList.remove('visible');
+
+    const url = document.getElementById('url').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const expiresAt = document.getElementById('expiresAt').value;
+    const code = document.getElementById('code').value.trim();
+
+    if (!url) { showError('shorten-error', '⚠ Please enter a URL'); return; }
+
+    const body = { url };
+    if (password) body.password = password;
+    if (expiresAt) body.expiresAt = expiresAt;
+    if (code) body.code = code;
+
+    setLoading('shorten-btn', true);
+
+    try {
+      const res = await fetch(`${API}/shorten`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        showError('shorten-error', `⚠ ${data.error}`);
+        return;
+      }
+
+      resultUrl = `${SHORT_DOMAIN}/${data.code}`;
+
+      document.getElementById('result-url').innerHTML =
+        `<a href="${resultUrl}" target="_blank">${resultUrl}</a>`;
+
+      // Build meta
+      let meta = `<div class="meta-item"><div class="key">Code</div><div class="val">${data.code}</div></div>`;
+      if (data.password) meta += `<div class="meta-item"><div class="key">Password</div><div class="val">Protected ✓</div></div>`;
+      if (data.expires_at) meta += `<div class="meta-item"><div class="key">Expires</div><div class="val">${new Date(data.expires_at).toLocaleDateString()}</div></div>`;
+      document.getElementById('result-meta').innerHTML = meta;
+
+      document.getElementById('result').classList.add('visible');
+      document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    } catch (e) {
+      showError('shorten-error', '⚠ Network error. Is the API reachable?');
+    } finally {
+      setLoading('shorten-btn', false);
+    }
+  }
+
+  async function copyLink() {
+    if (!resultUrl) return;
+    try {
+      await navigator.clipboard.writeText(resultUrl);
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy Link';
+        btn.classList.remove('copied');
+      }, 2000);
+    } catch {
+      prompt('Copy this link:', resultUrl);
+    }
+  }
+
+  async function lookupCode() {
+    hideError('lookup-error');
+    document.getElementById('lookup-result').classList.remove('visible');
+
+    let input = document.getElementById('lookup-input').value.trim();
+    if (!input) { showError('lookup-error', '⚠ Please enter a code or short URL'); return; }
+
+    // Extract code from full URL if needed
+    input = input.replace(/^https?:\/\/go\.lous\.in\/?/, '').replace(/^\//, '');
+
+    setLoading('lookup-btn', true);
+
+    try {
+      const res = await fetch(`${API}/short/${input}`, { method: 'GET', redirect: 'manual' });
+
+      if (res.type === 'opaqueredirect' || res.status === 0) {
+        // Got a redirect — show the short link itself
+        document.getElementById('lookup-url').innerHTML =
+          `<strong>${SHORT_DOMAIN}/${input}</strong><br><span style="color:var(--muted);font-size:0.75rem">→ Redirect exists (follow link to visit)</span>`;
+        document.getElementById('lookup-result').classList.add('visible');
+        return;
+      }
+
+      if (res.status === 404) {
+        showError('lookup-error', '⚠ Code not found or expired');
+        return;
+      }
+
+      const loc = res.headers.get('Location');
+      if (loc) {
+        document.getElementById('lookup-url').innerHTML = `<strong>${loc}</strong>`;
+      } else {
+        document.getElementById('lookup-url').innerHTML =
+          `Link: <strong><a href="${SHORT_DOMAIN}/${input}" target="_blank">${SHORT_DOMAIN}/${input}</a></strong>`;
+      }
+      document.getElementById('lookup-result').classList.add('visible');
+
+    } catch (e) {
+      showError('lookup-error', '⚠ Network error. Is the API reachable?');
+    } finally {
+      setLoading('lookup-btn', false);
+    }
+  }
+
+  // Allow Enter key submission
+  document.getElementById('url').addEventListener('keydown', e => { if (e.key === 'Enter') shortenUrl(); });
+  document.getElementById('lookup-input').addEventListener('keydown', e => { if (e.key === 'Enter') lookupCode(); });
+
+  function switchTab(panelId, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(panelId).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function copyCode(preId, btn) {
+    const pre = document.getElementById(preId);
+    // Get text content stripping the button's text
+    const text = pre.innerText.replace(/^copy\n?/, '').trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied ✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
