@@ -1,67 +1,51 @@
 const Route = require("../structures/Route");
-const bcrypt = require("bcrypt");
+const { isValidCode, MAX_PASSWORD_LENGTH } = require("../utils/Shortener");
+const { findActiveLink, recordClick, checkPassword, passwordPage } = require("../utils/links");
+const { limiter } = require("../middleware/rateLimit");
 
 /**
- * POST /short/:code
+ * POST /short/:code  (also served at POST /:code, see resolveRootPost.js)
  *
- * Handles the HTML password-form submission from the password-gate page.
- * Verifies the password and issues a redirect on success.
- *
- * Body (application/x-www-form-urlencoded):
- *  - password  {string}  The plain-text password to verify.
+ * Handles the password-form submission. Body (urlencoded or JSON): { password }.
+ * On success records the click and redirects (303). On failure re-renders the form (401).
  */
 class ShortenPost extends Route {
-  constructor(app) {
+  constructor(app, config = {}) {
     super(app, {
       name: "short/:code",
       description: "Verify password from HTML form then redirect.",
       method: "POST",
       category: "Misc",
-      usage: "POST /short/:code  (form body: password=<value>)",
+      usage: "POST /short/:code  (body: password=<value>)",
+      middleware: (a) => [limiter(a.locals.config.rateLimitUnlockPerMin, "Too many attempts, try again in a minute")],
+      ...config,
     });
+    this.prefix = config.name ? "" : "/short";
   }
 
   async RouteRun(req, res) {
     const { code } = req.params;
+    if (!isValidCode(code)) return res.status(400).send("Bad request: invalid code format");
 
-    // ── Sanitise ──────────────────────────────────────────────────────────────
-    if (!/^[a-zA-Z0-9_-]+$/.test(code)) {
-      return res.status(400).send("Bad request: invalid code format");
-    }
+    const row = await findActiveLink(this.app.pool, code);
+    if (!row) return res.status(404).send("Not Found");
 
-    const supplied = req.body?.password;
-    if (!supplied) return res.status(400).send("Password required");
-
-    // ── Fetch link ────────────────────────────────────────────────────────────
-    const [rows] = await this.app.pool.query(
-      "SELECT url, expires_at, password_hash FROM short_links WHERE code = ? LIMIT 1",
-      [code]
-    );
-
-    if (!rows.length) return res.status(404).send("Not Found");
-
-    const row = rows[0];
-
-    if (row.expires_at && new Date(row.expires_at) < new Date()) {
-      return res.status(404).send("Not Found");
-    }
-
-    // ── No password set — just redirect ──────────────────────────────────────
     if (!row.password_hash) {
-      return res.redirect(302, row.url);
+      await recordClick(this.app.pool, code);
+      return res.redirect(303, row.url);
     }
 
-    // ── Verify password ───────────────────────────────────────────────────────
-    const ok = await bcrypt.compare(String(supplied), row.password_hash);
-    if (!ok) return res.status(401).send("Invalid password");
+    const supplied = req.body && req.body.password;
+    const action = `${this.prefix}/${code}`;
+    if (typeof supplied !== "string" || !supplied || supplied.length > MAX_PASSWORD_LENGTH) {
+      return res.status(400).type("html").send(passwordPage(action, "Password required"));
+    }
+    if (!(await checkPassword(supplied, row.password_hash))) {
+      return res.status(401).type("html").send(passwordPage(action, "Incorrect password. Try again."));
+    }
 
-    // ── Record click & redirect ───────────────────────────────────────────────
-    await this.app.pool.query(
-      "UPDATE short_links SET clicks = clicks + 1, last_clicked_at = NOW() WHERE code = ?",
-      [code]
-    );
-
-    return res.redirect(302, row.url);
+    await recordClick(this.app.pool, code);
+    return res.redirect(303, row.url);
   }
 }
 

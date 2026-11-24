@@ -11,6 +11,8 @@
  *  - description {string}  Human-readable description (used in README / logs)
  *  - usage       {string}  Example usage string
  *  - category    {string}  Optional grouping label
+ *  - last        {boolean} Register after all other routes (for catch-all paths like "/:code")
+ *  - middleware  {function(app): Function[]} Optional per-route Express middleware
  */
 class Route {
   constructor(app, config = {}) {
@@ -22,6 +24,8 @@ class Route {
     this.description = config.description || "";
     this.usage = config.usage || "";
     this.category = config.category || "Misc";
+    this.last = !!config.last;
+    this.middleware = config.middleware || (() => []);
   }
 
   /**

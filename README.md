@@ -100,7 +100,7 @@ short-url/
 
 ### How routes are loaded
 
-`src/index.js` scans every `.js` file in `src/routes/` at startup and registers each one on Express automatically. To add a new endpoint, just drop a file that exports a class extending `Route` — no registration boilerplate needed.
+`src/app.js` scans every `.js` file in `src/routes/` at startup and registers each one on Express automatically. To add a new endpoint, just drop a file that exports a class extending `Route` — no registration boilerplate needed.
 
 ---
 
@@ -111,39 +111,31 @@ Copy `.env.example` to `.env` and fill in your values:
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `3000` | Port the server listens on |
-| `DB_HOST` | `localhost` | MySQL hostname |
+| `NODE_ENV` | — | Set `production` when deployed; makes `SHORT_DOMAIN` mandatory |
+| `DB_HOST` | required | MySQL hostname |
 | `DB_PORT` | `3306` | MySQL port |
-| `DB_USER` | `root` | MySQL username |
-| `DB_PASSWORD` | — | MySQL password |
-| `DB_NAME` | `shorturl` | Database name |
-| `SHORT_DOMAIN` | `https://go.lous.in` | Public domain used in API responses |
+| `DB_USER` | required | MySQL username |
+| `DB_PASSWORD` | required | MySQL password (the `.env.example` placeholder is rejected) |
+| `DB_NAME` | required | Database name (must already exist) |
+| `SHORT_DOMAIN` | required in production | Public domain used in API responses, e.g. `https://go.example.com` |
+| `API_KEY` | empty | If set (16+ chars), `POST /shorten` requires it. Empty = open creation, with a startup warning |
+| `TRUST_PROXY` | empty | Number of reverse proxies in front (e.g. `1`), so rate limits use real client IPs |
+| `RATE_LIMIT_CREATE_PER_MIN` | `20` | Link creations per IP per minute |
+| `RATE_LIMIT_UNLOCK_PER_MIN` | `10` | Password attempts per IP per minute |
+
+The server validates all of this at startup and exits with a list of problems instead of failing on the first request.
 
 ---
 
 ## Database Setup
 
-Run the included `schema.sql` once to create the table:
+Create the (empty) database, then run the migrations:
 
 ```bash
-mysql -u root -p your_database_name < schema.sql
+npm run migrate
 ```
 
-Or paste it manually in any MySQL client. The schema creates:
-
-```sql
-CREATE TABLE short_links (
-  id              BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
-  code            VARCHAR(64)      NOT NULL,          -- short code / slug
-  url             TEXT             NOT NULL,          -- destination URL
-  password_hash   VARCHAR(255)     DEFAULT NULL,      -- bcrypt hash (NULL = no password)
-  expires_at      DATETIME         DEFAULT NULL,      -- optional expiry
-  clicks          BIGINT UNSIGNED  NOT NULL DEFAULT 0,
-  last_clicked_at DATETIME         DEFAULT NULL,
-  created_at      DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  UNIQUE KEY uq_code (code)
-);
-```
+This applies `migrations/*.sql` in order, once each, and is safe to run on every deploy. `schema.sql` is kept for anyone who prefers to apply the table by hand. See [docs/SETUP.md](docs/SETUP.md) for install, backup and restore.
 
 ---
 
@@ -161,20 +153,23 @@ Base URL: `https://api.lous.in` (live) or `http://localhost:3000` (local)
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `url` | string | ✅ | Destination URL. Must start with `http://` or `https://`. |
-| `password` | string | optional | Plain-text password. Stored as a bcrypt hash (12 rounds). |
-| `expiresAt` | string | optional | Expiry date in `YYYY-MM-DD` format. Link returns 404 after this date. |
-| `code` | string | optional | Custom short slug (e.g. `my-link`). Returns `409` if already taken. |
+| `url` | string | ✅ | Destination URL. Must start with `http://` or `https://`, max 8000 chars. |
+| `password` | string | optional | Plain-text password, max 72 chars. Stored as a bcrypt hash (12 rounds). |
+| `expiresAt` | string | optional | Future date in strict `YYYY-MM-DD` format (UTC). Link returns 404 after this date. |
+| `code` | string | optional | Custom slug, 1-64 chars of `A-Za-z0-9_-` (e.g. `my-link`). `409` if taken, `400` if reserved (`health`, `shorten`, `short`). |
+
+If `API_KEY` is set, add the header `x-api-key: <key>` (or `Authorization: Bearer <key>`).
 
 #### Example request
 
 ```bash
-curl -X POST https://api.lous.in/shorten \
+curl -X POST https://go.example.com/shorten \
   -H "Content-Type: application/json" \
+  -H "x-api-key: $API_KEY" \
   -d '{
     "url": "https://example.com/some/very/long/path",
     "password": "secret123",
-    "expiresAt": "2025-12-31",
+    "expiresAt": "2030-12-31",
     "code": "my-link"
   }'
 ```
@@ -184,7 +179,7 @@ curl -X POST https://api.lous.in/shorten \
 ```json
 {
   "code": "my-link",
-  "url": "https://go.lous.in/my-link",
+  "url": "https://go.example.com/my-link",
   "password_protected": true,
   "expires_at": "2025-12-31T00:00:00.000Z"
 }
@@ -194,49 +189,46 @@ curl -X POST https://api.lous.in/shorten \
 
 | Status | Body | Cause |
 |---|---|---|
-| `400` | `{ "error": "Usage", ... }` | Missing or invalid URL |
-| `400` | `{ "error": "expiresAt must be a valid date..." }` | Invalid date format |
+| `400` | `{ "error": "..." }` | Invalid url, expiresAt (format or past), password, or code |
+| `401` | `{ "error": "Unauthorized..." }` | `API_KEY` is set and the header is missing or wrong |
+| `429` | `{ "error": "Too many requests..." }` | Rate limit hit |
 | `409` | `{ "error": "Code already taken" }` | Custom code conflict |
 | `500` | `{ "error": "Internal server error" }` | Database error |
 
 ---
 
-### `GET /short/:code` — Resolve & redirect
+### `GET /:code` (also `GET /short/:code`) — Resolve & redirect
+
+Short URLs returned by `POST /shorten` look like `https://go.example.com/<code>`, so the root path `/<code>` resolves them. `/short/<code>` still works for existing integrations.
 
 Redirects `302` to the destination URL. Increments `clicks` and sets `last_clicked_at` on every successful visit.
 
-If the link is **password-protected** and no `?password=` query param is present, serves an HTML unlock page instead.
+If the link is **password-protected**, an HTML unlock form is served instead. Passwords are **not** accepted in the query string (they would end up in logs and browser history).
 
 ```
-GET https://api.lous.in/short/my-link
+GET https://go.example.com/my-link
 → 302  Location: https://example.com/some/very/long/path
 
-GET https://api.lous.in/short/my-link?password=secret123
-→ 302  Location: https://example.com/some/very/long/path  (if correct)
-→ 401  "Invalid password"                                  (if wrong)
-
-GET https://api.lous.in/short/unknown
+GET https://go.example.com/unknown
 → 404  "Not Found"
 ```
 
-#### Code validation
-
-Codes must match `^[a-zA-Z0-9_-]+$`. Any other characters return `400 Bad request`.
+Codes must match `^[a-zA-Z0-9_-]{1,64}$`. Anything else returns `400`.
 
 ---
 
-### `POST /short/:code` — Password form submission
+### `POST /:code` (also `POST /short/:code`) — Password form submission
 
-Handles the form `POST` from the built-in HTML password-gate page.
+**Body** (`application/x-www-form-urlencoded` or JSON): `password`
 
-**Body** (`application/x-www-form-urlencoded`):
+On success → `303` redirect to the destination URL.  
+On failure → `401` and the form again. Limited to `RATE_LIMIT_UNLOCK_PER_MIN` attempts per IP.
 
-| Field | Description |
-|---|---|
-| `password` | Plain-text password to verify |
+---
 
-On success → `302` redirect to the destination URL.  
-On failure → `401 Invalid password`.
+### `GET /health`
+
+`200 {"status":"ok"}` when the app can reach the database, `503` otherwise. Use it for uptime monitors.
 
 ---
 
@@ -245,7 +237,7 @@ On failure → `401 Invalid password`.
 **JavaScript / Node.js**
 
 ```js
-const res = await fetch('https://api.lous.in/shorten', {
+const res = await fetch('https://go.example.com/shorten', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -256,7 +248,7 @@ const res = await fetch('https://api.lous.in/shorten', {
 });
 
 const data = await res.json();
-console.log(data.url); // https://go.lous.in/my-link
+console.log(data.url); // https://go.example.com/my-link
 ```
 
 **Python**
@@ -264,18 +256,18 @@ console.log(data.url); // https://go.lous.in/my-link
 ```python
 import requests
 
-data = requests.post('https://api.lous.in/shorten', json={
+data = requests.post('https://go.example.com/shorten', json={
     'url': 'https://example.com/long-url',
     'code': 'my-link',
 }).json()
 
-print(data['url'])  # https://go.lous.in/my-link
+print(data['url'])  # https://go.example.com/my-link
 ```
 
 **cURL**
 
 ```bash
-curl -X POST https://api.lous.in/shorten \
+curl -X POST https://go.example.com/shorten \
   -H "Content-Type: application/json" \
   -d '{"url":"https://example.com/long-url","code":"my-link"}'
 ```
@@ -312,7 +304,7 @@ WHERE code = ?
 
 ### Requirements
 
-- **Node.js** ≥ 18
+- **Node.js** ≥ 20 (22 recommended, see `.nvmrc`)
 - **MySQL** 5.7+ or **MariaDB** 10.3+
 
 ### With PM2 (production)
@@ -324,22 +316,15 @@ pm2 save
 pm2 startup
 ```
 
-### With Docker (bring your own DB)
-
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY . .
-EXPOSE 3000
-CMD ["node", "src/index.js"]
-```
+### With Docker Compose (app + MySQL)
 
 ```bash
-docker build -t short-url .
-docker run -d --env-file .env -p 3000:3000 short-url
+cp .env.example .env     # set DB_PASSWORD, API_KEY, SHORT_DOMAIN
+docker compose up -d --build
+curl http://localhost:3000/health
 ```
+
+The compose file starts MySQL, waits for it to be healthy, runs the migrations, then starts the app. Data lives in the `db_data` volume.
 
 ### Reverse proxy (nginx example)
 
@@ -352,11 +337,12 @@ server {
         proxy_pass http://127.0.0.1:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 }
 ```
 
-Then add SSL with `certbot --nginx`.
+Then add SSL with `certbot --nginx`, and set `TRUST_PROXY=1` in `.env`.
 
 ---
 
@@ -368,6 +354,16 @@ Contributions are welcome! Feel free to open issues or pull requests.
 2. Create a feature branch: `git checkout -b feat/your-feature`
 3. Commit your changes: `git commit -m "feat: add your feature"`
 4. Push and open a PR
+
+---
+
+## Tests
+
+```bash
+npm test
+```
+
+The suite uses Node's built-in test runner and an in-memory stand-in for the database, so it needs no MySQL.
 
 ---
 
