@@ -87,6 +87,14 @@ test("password links: GET shows form, query password is ignored, POST unlocks", 
   await s.close();
 });
 
+test("built-in form includes an optional API key and sends it only when filled", async () => {
+  const s = await start();
+  const html = await (await fetch(s.base + "/")).text();
+  assert.match(html, /<input type="password" id="apiKey"/);
+  assert.match(html, /if \(apiKey\) headers\['x-api-key'\] = apiKey;/);
+  await s.close();
+});
+
 test("API key: required on create when configured, never on resolve", async () => {
   const key = "k".repeat(20);
   const s = await start({ API_KEY: key });
